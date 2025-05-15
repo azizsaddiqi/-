@@ -1,0 +1,105 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>دفترچه حساب</title>
+    <style>
+        body { font-family: sans-serif; direction: rtl; padding: 20px; background-color: #f9f9f9; }
+        h1 { text-align: center; }
+        label, select, input, button { margin: 5px 0; display: block; width: 100%; max-width: 400px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; background: #fff; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+        th { background-color: #eee; }
+    </style>
+</head>
+<body>
+    <h1>دفترچه حساب چند ارزی</h1>
+
+    <label>نام مشتری:
+        <input type="text" id="customer">
+    </label>
+    <label>مبلغ:
+        <input type="number" id="amount">
+    </label>
+    <label>ارز:
+        <select id="currency">
+            <option value="افغانی">افغانی</option>
+            <option value="دالر">دالر</option>
+            <option value="یورو">یورو</option>
+            <option value="درهم">درهم</option>
+            <option value="تتر">تتر</option>
+            <option value="تومان">تومان</option>
+        </select>
+    </label>
+    <label>نوع تراکنش:
+        <select id="type">
+            <option value="واریز">واریز</option>
+            <option value="برداشت">برداشت</option>
+        </select>
+    </label>
+    <button onclick="addTransaction()">ثبت تراکنش</button>
+
+    <table id="transactions">
+        <thead>
+            <tr>
+                <th>نام مشتری</th>
+                <th>مبلغ</th>
+                <th>ارز</th>
+                <th>نوع تراکنش</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <h2>بیلانس مشتری</h2>
+    <div id="balance"></div>
+
+    <script>
+        let transactions = JSON.parse(localStorage.getItem("transactions") || "[]");
+
+        function addTransaction() {
+            const customer = document.getElementById("customer").value;
+            const amount = parseFloat(document.getElementById("amount").value);
+            const currency = document.getElementById("currency").value;
+            const type = document.getElementById("type").value;
+
+            if (!customer || isNaN(amount)) {
+                alert("لطفاً اطلاعات را کامل وارد کنید");
+                return;
+            }
+
+            transactions.push({ customer, amount, currency, type });
+            localStorage.setItem("transactions", JSON.stringify(transactions));
+            render();
+        }
+
+        function render() {
+            const tbody = document.querySelector("#transactions tbody");
+            const balance = {};
+
+            tbody.innerHTML = "";
+
+            transactions.forEach(t => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `<td>${t.customer}</td><td>${t.amount}</td><td>${t.currency}</td><td>${t.type}</td>`;
+                tbody.appendChild(tr);
+
+                const key = t.customer + "_" + t.currency;
+                if (!balance[key]) balance[key] = 0;
+                balance[key] += t.type === "واریز" ? t.amount : -t.amount;
+            });
+
+            const balanceDiv = document.getElementById("balance");
+            balanceDiv.innerHTML = "";
+            Object.keys(balance).forEach(key => {
+                const [name, curr] = key.split("_");
+                const b = balance[key].toLocaleString("fa-IR");
+                balanceDiv.innerHTML += `<p><strong>${name}</strong> - ${curr}: ${b}</p>`;
+            });
+        }
+
+        render();
+    </script>
+</body>
+</html>
